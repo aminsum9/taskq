@@ -20,6 +20,11 @@
           </ul>
         </div>
       </div>
+      <div class="dropdown mt-2">
+        <button class="btn btn-primary dropdown-toggle" type="button" aria-expanded="false">
+          All Task
+        </button>
+      </div>
       <div class="tableFixHead mt-4" >
         <table class="table">
           <thead>
@@ -74,7 +79,7 @@
                 </select>
               </td>
               <td class="text-center" >
-                <input class="form-control text-center" type="date" />
+                <input class="form-control text-center datepicker" type="date" />
               </td>
               <td >
                 <input class="form-control text-center" :value="item['Estimated SP']" />
@@ -159,6 +164,8 @@ input[type="checkbox"] {
 import axios from 'axios';
 import { v4 as uuidv4 } from "uuid";
 import $ from 'jquery'
+import flatpickr from "flatpickr";
+import "flatpickr/dist/flatpickr.css";
 
 export default {
   name: "MainTable",
@@ -196,6 +203,9 @@ export default {
             this.selectStatus()
             this.selectPriority()
             this.selectType()
+            flatpickr(".datepicker", {
+              dateFormat: "d F Y" // dd MMMM yyyy
+            });
           },50)
 
           return ressDataNew;
@@ -277,6 +287,9 @@ export default {
         this.selectStatus()
         this.selectPriority()
         this.selectType()
+        flatpickr(".datepicker", {
+          dateFormat: "d F Y" // dd MMMM yyyy
+        });
       },50)
     },
     selectSortColumn(e){
