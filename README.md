@@ -1,24 +1,10 @@
-# taskq
-
-## Project setup
-```
-yarn install
-```
-
-### Compiles and hot-reloads for development
-```
-yarn serve
-```
-
-### Compiles and minifies for production
-```
-yarn build
-```
-
-### Lints and fixes files
-```
-yarn lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+- install vue js 3
+- pada terminal di root project jalankan command "npm install"
+- pada terminal di root project jalankan command "vue ui"
+- masuk ke browser dashboard project vue js dan pilih project taskq
+- jika belum ada maka import terlebih dahulu project taskq
+- pilih project taskq
+- pilih menu Tasks
+- build project terlebih dahulu dengan masuk ke sub menu "build" dan tekan tombol "run task", tunggu sampai proses selesai
+- jalankan project dengan menjalankan "run task" pada sub menu "serve", tunggu sampai proses selesai
+- buka project dengan mengeklik tombol "Open App" pada sub menu "serve"
