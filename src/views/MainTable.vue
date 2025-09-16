@@ -39,7 +39,7 @@
             <tr>
               <th scope="col" class="text-center align-middle" style="width: 5%;"><input type="checkbox" class="input-check-all" /></th>
               <th scope="col" class="text-center align-middle" style="width: 15%;" @click="selectSortColumn" >Task</th>
-              <th scope="col" class="text-center align-middle" @click="selectSortColumn" >Developer</th>
+              <th scope="col" class="text-center align-middle" @click="selectSortColumn" style="z-index: 500;" >Developer</th>
               <th scope="col" class="text-center align-middle" @click="selectSortColumn" >Status</th>
               <th scope="col" class="text-center align-middle" @click="selectSortColumn" >Priority</th>
               <th scope="col" class="text-center align-middle" @click="selectSortColumn" >Type</th>
@@ -55,8 +55,12 @@
                 <input type="checkbox" class="can-check-all" />
                 <input type="hidden" name="id" :value="item.id"  />
               </td>
-              <td ><input class="form-control" :value="item.title" /></td>
-              <td class="text-center" >{{ item.developer }}</td>
+              <td ><input class="form-control" :value="item.title" @input="(e) => editInput(e,'title',index)" /></td>
+              <td class="text-center select-developer" >
+                <select v-model="item.developer" class="form-select" :id="'select-developer-' + item.id" data-placeholder="Choose Developer" multiple>
+                    <option :selected=" JSON.parse(JSON.stringify(item.developer)).includes()" v-for="(itemDev, index) in developers" :key="index" >{{itemDev}}</option>
+                </select>
+              </td>
               <td class="text-center" :id="'select-' + item.id" >
                 <select class="form-select select-status" aria-label="status" v-model="item.status" @change="selectStatus" >
                   <option value="">-- Select Status --</option>
@@ -87,13 +91,13 @@
                 </select>
               </td>
               <td class="text-center" >
-                <input class="form-control text-center datepicker" type="date" />
+                <input class="form-control text-center datepicker" type="text" />
               </td>
               <td >
-                <input class="form-control text-center" :value="item['Estimated SP']" />
+                <input @input="(e) => editInput(e,'Estimated SP',index)" class="form-control text-center" :value="item['Estimated SP']" />
               </td>
               <td >
-                <input class="form-control text-center" :value="item['Actual SP']" />
+                <input @input="(e) => editInput(e,'Actual SP',index)" class="form-control text-center" :value="item['Actual SP']" />
               </td>
               <td class="text-center" >-</td>
             </tr>
@@ -150,6 +154,11 @@ th, td { background: #fff; padding: 8px 16px; }
 .tableFixHead {
   overflow: auto;
   height: 370px;
+  max-height: 370px;
+}
+
+.tableFixHead table tbody {
+  max-height: 370px;
 }
 
 .tableFixHead thead th {
@@ -169,9 +178,12 @@ input[type="checkbox"] {
 </style>
 
 <script>
+import "select2/dist/css/select2.min.css";
+import {toRaw} from 'vue';
 import axios from 'axios';
 import { v4 as uuidv4 } from "uuid";
 import $ from 'jquery'
+import "select2";
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.css";
 
@@ -196,6 +208,29 @@ export default {
       $('#total-est-sp').text(totalEstSP)
       $('#total-act-sp').text(totalActtSP)
     },
+    initInputRow(){
+      setTimeout(()=>{
+        this.selectStatus()
+        this.selectPriority()
+        this.selectType()
+        flatpickr(".datepicker", {
+          dateFormat: "d F Y", // dd MMMM yyyy
+          onChange: () => {
+            this.editDate()
+          },
+        });
+        this.editDate()
+        $("#task-rows tr").each(function(){
+          var idSelectDev = $(this).find('.select-developer').find('select').attr('id');
+          $(`#${idSelectDev}`).select2( {
+              theme: "bootstrap-5",
+              width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
+              placeholder: $( this ).data( 'placeholder' ),
+              closeOnSelect: false,
+          } );
+        })
+      },50)
+    },
      getData(){
       return axios.get('https://mocki.io/v1/4e602db4-efab-438f-a664-bec50fc16f7e')
       .then(ress => {
@@ -204,19 +239,13 @@ export default {
           var ressData = ress?.data?.data ?? [];
 
           let ressDataNew = ressData.map(item => {
-            return { ...item, date: "",id: uuidv4() };
+            var developer = item.developer.split(",")
+            return { ...item, date: "",id: uuidv4(), developer: developer };
           });
 
           this.countSP(ressDataNew)
 
-          setTimeout(()=>{
-            this.selectStatus()
-            this.selectPriority()
-            this.selectType()
-            flatpickr(".datepicker", {
-              dateFormat: "d F Y" // dd MMMM yyyy
-            });
-          },50)
+          this.initInputRow();
 
           return ressDataNew;
         } else {
@@ -230,7 +259,7 @@ export default {
       {
         var devName = this.filterDeveloper;
         return this.data.filter(item => {
-            var developer = item.developer.split(',');
+            var developer = item.developer;
             let trimmedNames = developer.map(item => item.trim());
 
             let checkData = trimmedNames.some(item => item == devName);
@@ -252,14 +281,7 @@ export default {
       if(devName == '-- Select Developer --')
       {
         this.filterDeveloper = "";
-        setTimeout(()=>{
-          this.selectStatus()
-          this.selectPriority()
-          this.selectType()
-          flatpickr(".datepicker", {
-            dateFormat: "d F Y" // dd MMMM yyyy
-          });
-        },50)
+        this.initInputRow();
       } else {
         this.filterDeveloper = devName;
       }
@@ -325,14 +347,7 @@ export default {
           "Actual SP": 0,
           "date": ""
       },...this.data]
-      setTimeout(()=>{
-        this.selectStatus()
-        this.selectPriority()
-        this.selectType()
-        flatpickr(".datepicker", {
-          dateFormat: "d F Y" // dd MMMM yyyy
-        });
-      },50)
+      this.initInputRow();
     },
     selectSortColumn(e){
       this.sortColumn = e.target.innerText;
@@ -348,7 +363,43 @@ export default {
         }
       })
     },
+    editInput(e,name,index){
+      var value = e.target.value;
+
+      var itemData = toRaw(this.data)[index];
+
+      itemData[name] = value;
+
+      var newData = toRaw(this.data);
+
+      newData[index] = itemData;
+
+      this.data = newData;
+    },
+    editDate(){
+      var index = 0;
+      var thisData = this.data;
+
+      $('#task-rows tr').each(function(){
+        var value = $(this).find('.datepicker').val();
+
+        if(thisData)
+        {
+          var newData = toRaw(thisData)
+
+          var itemData = newData[index];
+          itemData['date'] = value;
+
+          newData[index] = itemData;
+
+          this.data = newData;
+
+          index++
+        }
+      })
+    },
     selectStatus(){
+      var index = 0;
       $('#task-rows tr').each(function(){
         var value = $(this).find('.select-status').val();
 
@@ -377,12 +428,28 @@ export default {
           default:
             break;
         }
+
+        if(this.data)
+        {
+          var itemData = toRaw(this.data)[index];
+          itemData['status'] = value;
+
+          var newData = toRaw(this.data);
+
+          newData[index] = itemData;
+
+          this.data = newData;
+        }
        
         $(this).find('select.select-status').css({'background-color': bgColor,'border-color': bgColor})
         $(this).find('select.select-status').closest('td').css({'background-color': bgColor})
+
+        index++
       })
     },
     selectPriority(){
+      var index = 0;
+
       $('#task-rows tr').each(function(){
         var value = $(this).find('.select-priority').val();
 
@@ -407,12 +474,28 @@ export default {
           default:
             break;
         }
+
+        if(this.data)
+        {
+          var itemData = toRaw(this.data)[index];
+          itemData['priority'] = value;
+
+          var newData = toRaw(this.data);
+
+          newData[index] = itemData;
+
+          this.data = newData;
+        }
        
         $(this).find('select.select-priority').css({'background-color': bgColor,'border-color': bgColor})
         $(this).find('select.select-priority').closest('td').css({'background-color': bgColor})
+
+        index++
       })
     },
     selectType(){
+      var index = 0;
+
       $('#task-rows tr').each(function(){
         var value = $(this).find('.select-type').val();
 
@@ -431,9 +514,23 @@ export default {
           default:
             break;
         }
+
+        if(this.data)
+        {
+          var itemData = toRaw(this.data)[index];
+          itemData['type'] = value;
+
+          var newData = toRaw(this.data);
+
+          newData[index] = itemData;
+
+          this.data = newData;
+        }
        
         $(this).find('select.select-type').css({'background-color': bgColor,'border-color': bgColor})
         $(this).find('select.select-type').closest('td').css({'background-color': bgColor})
+
+        index++
       })
     }
   },
@@ -446,7 +543,7 @@ export default {
     var developers = [];
 
     ressData.forEach(itemData => {
-      var itemDevs = itemData.developer.split(",");
+      var itemDevs = itemData.developer;
 
       let checkData = itemDevs.some(item => developers.includes(item.trim()));
       if(!checkData)

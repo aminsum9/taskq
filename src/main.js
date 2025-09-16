@@ -9,7 +9,9 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { fab } from '@fortawesome/free-brands-svg-icons';
 import { far } from '@fortawesome/free-regular-svg-icons';
+import "select2/dist/css/select2.min.css";
 import $ from 'jquery'
+import "select2";
 
 library.add(fas, fab, far);
 var app = createApp(App);
