@@ -368,13 +368,19 @@ export default {
 
       var itemData = toRaw(this.data)[index];
 
-      itemData[name] = value;
+      var finalValue = (name == 'Estimated SP' || name == 'Actual SP') ? (isNaN(value) || value == '' ? 0 : parseInt(value)) : value;
+
+      itemData[name] = finalValue;
 
       var newData = toRaw(this.data);
 
       newData[index] = itemData;
 
       this.data = newData;
+
+      if(name == 'Estimated SP' || name == 'Actual SP'){
+        this.countSP(newData)
+      }
     },
     editDate(){
       var index = 0;
