@@ -9,7 +9,15 @@
         <div class="input-group ms-2 me-2">
             <input type="text" class="form-control" placeholder="Search" v-model="searchQuery" />
         </div>
-        <button class="btn btn-primary" >Person</button>
+         <div class="dropdown ms-2">
+          <button class="btn btn-primary dropdown-toggle" type="button" id="developer-dropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            Person
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="developer-dropdown">
+            <li><p class="dropdown-item" @click="filterByDeveloper" >-- Select Developer --</p></li>
+            <li v-for="(item,index) in developers" :key="index" ><p class="dropdown-item" @click="filterByDeveloper" >{{item}}</p></li>
+          </ul>
+        </div>
         <div class="dropdown ms-2">
           <button class="btn btn-primary dropdown-toggle" type="button" id="sort-dropdown" data-bs-toggle="dropdown" aria-expanded="false">
             Dropdown button
@@ -42,7 +50,7 @@
             </tr>
           </thead>
           <tbody id="task-rows" >
-            <tr v-for="(item,index) in (searchQuery ? filteredData() : data)" :key="index">
+            <tr v-for="(item,index) in ((searchQuery || filterDeveloper) ? filteredData() : data)" :key="index">
               <td class="text-center" >
                 <input type="checkbox" class="can-check-all" />
                 <input type="hidden" name="id" :value="item.id"  />
@@ -173,8 +181,10 @@ export default {
   },
   data() {
     return {
+      filterDeveloper: "",
       searchQuery: "",
       sortColumn: "",
+      developers: [],
       data: [],
     };
   },
@@ -215,12 +225,44 @@ export default {
       })
     },
     filteredData() {
+      // filter by developer
+      if(this.filterDeveloper)
+      {
+        var devName = this.filterDeveloper;
+        return this.data.filter(item => {
+            var developer = item.developer.split(',');
+            let trimmedNames = developer.map(item => item.trim());
+
+            let checkData = trimmedNames.some(item => item == devName);
+
+            return checkData;
+        });
+      }
+      // 
+
       if (!this.searchQuery) {
         return this.items;
       }
       return this.data.filter(item => 
         item.title.toLowerCase().includes(this.searchQuery.toLowerCase())
       );
+    },
+    filterByDeveloper(e){
+      var devName = e.target.innerText;
+      if(devName == '-- Select Developer --')
+      {
+        this.filterDeveloper = "";
+        setTimeout(()=>{
+          this.selectStatus()
+          this.selectPriority()
+          this.selectType()
+          flatpickr(".datepicker", {
+            dateFormat: "d F Y" // dd MMMM yyyy
+          });
+        },50)
+      } else {
+        this.filterDeveloper = devName;
+      }
     },
     handleSort(e){
       var sortType = e.target.innerText;
@@ -399,6 +441,22 @@ export default {
     this.checkAll()
     var ressData = await this.getData();
     this.data = ressData;
+
+    // get data developer
+    var developers = [];
+
+    ressData.forEach(itemData => {
+      var itemDevs = itemData.developer.split(",");
+
+      let checkData = itemDevs.some(item => developers.includes(item.trim()));
+      if(!checkData)
+      {
+        let trimmedNames = itemDevs.map(item => item.trim());
+        developers = [...developers, ...trimmedNames]
+      }
+    });
+
+    this.developers = developers;
   },
 };
 </script>
